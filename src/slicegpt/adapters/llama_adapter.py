@@ -231,7 +231,9 @@ class LlamaModelAdapter(ModelAdapter):
         #     return None
         if not model_name.startswith("meta-llama/Llama-2") and \
             not model_name.startswith("decapoda-research/llama-7b-hf") and \
-            not model_name.startswith("lmsys/vicuna-7b-v1.5"):
+            not model_name.startswith("lmsys/vicuna-7b-v1.5") and \
+            not model_name.startswith("lmsys/vicuna-13b-v1.5") and \
+            not model_name.startswith("decapoda-research/llama-13b-hf"):
             return None
 
         model = LlamaForCausalLM.from_pretrained(
