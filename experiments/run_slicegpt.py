@@ -73,6 +73,12 @@ def slicing_arg_parser(interactive: bool = True) -> argparse.Namespace:
         help="Final orientation of the sliced weights.",
     )
     parser.add_argument(
+        "--eval-dataset",
+        type=str,
+        help="Dataset to calibrate and calculate perplexity on.",
+        choices=["wikitext2", "ptb", "c4", "alpaca"],
+        default="wikitext2",)
+    parser.add_argument(
         "--ppl-eval-seqlen", type=int, default=2048, help="Sequence length for evaluating the perplexity."
     )
     parser.add_argument("--ppl-eval-batch-size", type=int, default=8, help="Batch size for evaluating the perplexity.")
@@ -159,8 +165,11 @@ def slicing_main(args: argparse.Namespace) -> None:
         else:
             model.to(config.device)
 
+    logging.info(f"Loaded calibration dataset: {args.cal_dataset}")
     dataset = data_utils.get_dataset(args.cal_dataset)
-    train_dataset, test_dataset = dataset["train"], dataset["test"]
+    # train_dataset, test_dataset = dataset["train"], dataset["test"]
+    print(dataset.keys())
+    train_dataset, _ = dataset["train"], dataset["test"]
     train_loader = data_utils.prepare_dataloader(
         dataset=train_dataset,
         tokenizer=tokenizer,
@@ -170,8 +179,12 @@ def slicing_main(args: argparse.Namespace) -> None:
         varied_seqlen=args.varied_seqlen,
         seed=args.seed,
     )
+    logging.info(f"Loaded evaluation dataset: {args.eval_dataset}")
+    eval_dataset = data_utils.get_dataset(args.eval_dataset)
+    _, test_dataset = eval_dataset["train"], eval_dataset["test"]
     test_loader = data_utils.prepare_test_dataloader(
-        dataset=test_dataset, tokenizer=tokenizer, batch_size=args.ppl_eval_batch_size
+        dataset=test_dataset, tokenizer=tokenizer, batch_size=args.ppl_eval_batch_size,
+        seqlen=args.ppl_eval_seqlen
     )
 
     # evaluate perplexity and exit if sliced model is loaded or if ppl_only is set
@@ -266,9 +279,10 @@ def slicing_main(args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
-    utils.configure_logging(log_to_console=True, log_to_file=False, level=logging.INFO)
+    # utils.configure_logging(log_to_console=True, log_to_file=False, level=logging.INFO)
     os.environ["WANDB__SERVICE_WAIT"] = "300"
 
     slicing_args = slicing_arg_parser()
+    utils.configure_logging(log_to_console=False, log_to_file=True, log_dir=slicing_args.save_dir, level=logging.INFO)
     process_slicing_args(slicing_args)
     slicing_main(slicing_args)

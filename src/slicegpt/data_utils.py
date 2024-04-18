@@ -23,13 +23,17 @@ def get_dataset(name: str) -> datasets.DatasetDict:
 
     ds_properties = {
         "wikitext2": {"path": "wikitext", "config_name": "wikitext-2-raw-v1"},
+        # "wikitext2": {"path": "/root/home/workspace/GPT_StrucPGPruning/datasets/wikitext/wikitext.py", "config_name": "wikitext-2-raw-v1"},
         "ptb": {"path": "ptb_text_only", "config_name": "penn_treebank"},
         "c4": {
-            "path": "allenai/c4",
-            "config_name": "allenai--c4",
+            # "path": "allenai/c4",
+            "path": "/root/home/workspace/GPT_StrucPGPruning/datasets/c4",
+            # "config_name": "allenai--c4",
+            "config_name": "c4",
             "data_files": {
                 "train": "en/c4-train.00000-of-01024.json.gz",
-                "validation": "en/c4-validation.00000-of-00008.json.gz",
+                # "validation": "en/c4-validation.00000-of-00008.json.gz",
+                "test": "en/c4-validation.00000-of-00008.json.gz",
             },
             "cols_to_remove": ['url', 'timestamp'],
         },

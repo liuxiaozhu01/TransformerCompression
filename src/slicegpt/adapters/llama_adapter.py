@@ -227,7 +227,11 @@ class LlamaModelAdapter(ModelAdapter):
         local_files_only: bool = False,
         token: str | bool | None = None,
     ) -> ModelAdapter | None:
-        if not model_name.startswith("meta-llama/Llama-2"):
+        # if not model_name.startswith("meta-llama/Llama-2"):
+        #     return None
+        if not model_name.startswith("meta-llama/Llama-2") and \
+            not model_name.startswith("decapoda-research/llama-7b-hf") and \
+            not model_name.startswith("lmsys/vicuna-7b-v1.5"):
             return None
 
         model = LlamaForCausalLM.from_pretrained(

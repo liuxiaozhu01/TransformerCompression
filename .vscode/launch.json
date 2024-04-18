@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/experiments",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "7",
+                "CUDA_LAUNCH_BLOCKING": "1",
+                "PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "5",
+            },
+            "args": [
+                "--model", "decapoda-research/llama-7b-hf",
+                "--model-path", "/root/home/workspace/LLM/llama/decapoda-research/llama-7b-hf",
+                "--save-dir", "exp/debugging",
+                "--sparsity", "0.20",
+                "--device", "cuda:0",
+                "--cal-dataset", "c4",
+                "--cal-nsamples", "128",
+                "--cal-batch-size", "8",
+                "--cal-max-seqlen", "2048",
+                "--eval-dataset", "wikitext2",
+                "--ppl-eval-seqlen", "128",
+                "--ppl-eval-batch-size", "8",
+                "--no-wandb"
+            ]
+        }
+    ]
+}
