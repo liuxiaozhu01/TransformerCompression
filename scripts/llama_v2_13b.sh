@@ -13,7 +13,7 @@ fi
 GPU_STRING=$(IFS=,; echo "$GPUS")
 
 # Define an array with the rates you want to use
-rates=("0.30" "0.35" "0.40" "0.45" "0.50")
+rates=("0.35" "0.40" "0.45" "0.50")
 
 # make directory
 base_dir="exp/summary/llama_v2_13b"

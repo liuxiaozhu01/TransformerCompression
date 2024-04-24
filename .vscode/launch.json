@@ -12,13 +12,13 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/experiments",
             "env": {
-                "CUDA_VISIBLE_DEVICES": "7",
+                "CUDA_VISIBLE_DEVICES": "1",
                 "CUDA_LAUNCH_BLOCKING": "1",
                 "PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "5",
             },
             "args": [
                 "--model", "decapoda-research/llama-7b-hf",
-                "--model-path", "/root/home/workspace/LLM/llama/decapoda-research/llama-7b-hf",
+                "--model-path", "/root/home/workspace/LLM/llama/decapoda-research/llama-13b-hf",
                 "--save-dir", "exp/debugging",
                 "--sparsity", "0.20",
                 "--device", "cuda:0",

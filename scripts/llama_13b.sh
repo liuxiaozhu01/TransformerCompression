@@ -28,7 +28,7 @@ do
   
   CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES="$GPU_STRING" python experiments/run_slicegpt.py \
   --model decapoda-research/llama-13b-hf \
-  --model-path /root/home/workspace/LLM/llama/decapoda-research/llama-13b-hf \
+  --model-path /root/home/workspace/LLM/llama/decapoda-research/llama-13b \
   --save-dir $exp_dir \
   --sparsity $rate \
   --device cuda:0 \
