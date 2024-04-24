@@ -4,6 +4,7 @@
 from .adapters.llama_adapter import LlamaModelAdapter
 from .adapters.opt_adapter import OPTModelAdapter
 from .adapters.phi2_adapter import Phi2ModelAdapter
+from .adapters.baichuan7b_adapter import Baichuan7BModelAdapter
 from .data_utils import get_dataset, prepare_dataloader
 from .gpu_utils import benchmark, distribute_model, evaluate_ppl
 from .hf_utils import get_model_and_tokenizer, load_sliced_model

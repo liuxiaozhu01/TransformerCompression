@@ -22,7 +22,7 @@ def get_dataset(name: str) -> datasets.DatasetDict:
     logging.info(f"Loading dataset: {name}")
 
     ds_properties = {
-        "wikitext2": {"path": "wikitext", "config_name": "wikitext-2-raw-v1"},
+        "wikitext2": {"path": "/root/home/workspace/dataset/wikitext", "config_name": "wikitext-2-raw-v1"},
         # "wikitext2": {"path": "/root/home/workspace/GPT_StrucPGPruning/datasets/wikitext/wikitext.py", "config_name": "wikitext-2-raw-v1"},
         "ptb": {"path": "ptb_text_only", "config_name": "penn_treebank"},
         "c4": {

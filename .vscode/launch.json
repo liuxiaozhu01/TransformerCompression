@@ -17,8 +17,8 @@
                 "PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "5",
             },
             "args": [
-                "--model", "decapoda-research/llama-7b-hf",
-                "--model-path", "/root/home/workspace/LLM/llama/decapoda-research/llama-13b-hf",
+                "--model", "baichuan-inc/Baichuan2-7B-Base",
+                "--model-path", "/root/home/workspace/LLM/baichuan/baichuan-inc/Baichuan2-7B-Base",
                 "--save-dir", "exp/debugging",
                 "--sparsity", "0.20",
                 "--device", "cuda:0",

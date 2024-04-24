@@ -102,7 +102,10 @@ def get_model_and_tokenizer(
     model.eval()  # This switches off dropout.
     model_adapter.use_cache = False
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, token=token, local_files_only=local_model)
+    if "baichuan" in model_name:
+        tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, token=token, local_files_only=local_model)
 
     model_adapter.post_init(tokenizer)
     logging.info("Loading model done")
