@@ -186,23 +186,31 @@ class Attention(nn.Module):
             past_key_value: Optional[Tuple[torch.Tensor]] = None,
             output_attentions: bool = False,
             use_cache: bool = False,
+            build_dp: bool = False,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         bsz, q_len, _ = hidden_states.size()
 
         proj = self.W_pack(hidden_states)
-        proj = proj.unflatten(-1, (3, self.hidden_size)).unsqueeze(0).transpose(0, -2).squeeze(-2)
-        query_states = proj[0].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
-                                                                                         2)  # batch_size x source_len x hidden_size
-        key_states = proj[1].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
-                                                                                       2)  # batch_size x target_len x head_size
-        value_states = proj[2].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
-                                                                                         2)  # batch_size x source_len x hidden_size
+        _, _, H_3 = proj.size()
+        H = H_3 // 3
+        #proj = proj.unflatten(-1, (3, self.hidden_size)).unsqueeze(0).transpose(0, -2).squeeze(-2)
+        #query_states = proj[0].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
+        #                                                                                 2)  # batch_size x source_len x hidden_size
+        #key_states = proj[1].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
+        #                                                                               2)  # batch_size x target_len x head_size
+        #value_states = proj[2].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
+        #                                                                                 2)  # batch_size x source_len x hidden_size
+        q_proj, k_proj, v_proj = torch.split(proj, [H, H, H], dim=-1)
+        query_states = q_proj.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        key_states = k_proj.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        value_states = v_proj.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
 
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
             kv_seq_len += past_key_value[0].shape[-2]
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
+        if not build_dp:
+            cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+            query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
         # [bsz, nh, t, hd]
 
         if past_key_value is not None:
@@ -270,6 +278,7 @@ class DecoderLayer(nn.Module):
             past_key_value: Optional[Tuple[torch.Tensor]] = None,
             output_attentions: Optional[bool] = False,
             use_cache: Optional[bool] = False,
+            build_dp: Optional[bool] = False,
     ) -> Tuple[torch.FloatTensor, Optional[Tuple[torch.FloatTensor, torch.FloatTensor]]]:
         """
         Args:
@@ -297,6 +306,7 @@ class DecoderLayer(nn.Module):
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
+            build_dp=build_dp,
         )
         hidden_states = residual + hidden_states
 
@@ -343,6 +353,7 @@ class PreTrainedModel(PreTrainedModel):
 class Model(PreTrainedModel):
     """
     Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`DecoderLayer`]
+
     Args:
         config: BaiChuanConfig
     """
@@ -401,6 +412,7 @@ class Model(PreTrainedModel):
             output_attentions: Optional[bool] = None,
             output_hidden_states: Optional[bool] = None,
             return_dict: Optional[bool] = None,
+            build_dp: Optional[bool] = False,
     ) -> Union[Tuple, BaseModelOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -491,6 +503,7 @@ class Model(PreTrainedModel):
                     past_key_value=past_key_value,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
+                    build_dp=build_dp
                 )
 
             hidden_states = layer_outputs[0]
@@ -558,6 +571,8 @@ class BaiChuanForCausalLM(PreTrainedModel):
             output_attentions: Optional[bool] = None,
             output_hidden_states: Optional[bool] = None,
             return_dict: Optional[bool] = None,
+            build_dp: Optional[bool] = False,
+            **kwargs
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
         Args:
@@ -565,14 +580,20 @@ class BaiChuanForCausalLM(PreTrainedModel):
                 Labels for computing the masked language modeling loss. Indices should either be in `[0, ...,
                 config.vocab_size]` or -100 (see `input_ids` docstring). Tokens with indices set to `-100` are ignored
                 (masked), the loss is only computed for the tokens with labels in `[0, ..., config.vocab_size]`.
+
         Returns:
+
         Example:
+
         ```python
         >>> from transformers import AutoTokenizer, ModelForCausalLM
+
         >>> model = ModelForCausalLM.from_pretrained(PATH_TO_CONVERTED_WEIGHTS)
         >>> tokenizer = AutoTokenizer.from_pretrained(PATH_TO_CONVERTED_TOKENIZER)
+
         >>> prompt = "Hey, are you consciours? Can you talk to me?"
         >>> inputs = tokenizer(prompt, return_tensors="pt")
+
         >>> # Generate
         >>> generate_ids = model.generate(inputs.input_ids, max_length=30)
         >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
@@ -596,6 +617,7 @@ class BaiChuanForCausalLM(PreTrainedModel):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
+            build_dp=build_dp,
         )
 
         hidden_states = outputs[0]

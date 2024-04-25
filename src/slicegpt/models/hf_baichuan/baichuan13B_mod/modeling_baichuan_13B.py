@@ -16,13 +16,11 @@ from .configuration_baichuan import BaichuanConfig
 
 logger = logging.get_logger(__name__)
 
-
 def _get_interleave(n):
     def _get_interleave_power_of_2(n):
         start = (2 ** (-2 ** -(math.log2(n) - 3)))
         ratio = start
         return [start * ratio ** i for i in range(n)]
-
     if math.log2(n).is_integer():
         return _get_interleave_power_of_2(n)
     else:
@@ -56,7 +54,6 @@ def _buffered_future_mask(tensor, maxpos, alibi, attn_heads):
     _future_mask = _future_mask.to(tensor)
     return _future_mask[:tensor.shape[0] * attn_heads, :maxpos, :maxpos]
 
-
 class RMSNorm(torch.nn.Module):
     def __init__(self, hidden_size, epsilon=1e-6):
         super().__init__()
@@ -72,7 +69,6 @@ class RMSNorm(torch.nn.Module):
             hidden_states = hidden_states.to(self.weight.dtype)
 
         return self.weight * hidden_states
-
 
 class MLP(torch.nn.Module):
     def __init__(
@@ -92,6 +88,7 @@ class MLP(torch.nn.Module):
 
 
 class BaichuanAttention(torch.nn.Module):
+
     def __init__(self, config: BaichuanConfig):
         super().__init__()
         self.config = config
@@ -122,10 +119,19 @@ class BaichuanAttention(torch.nn.Module):
         bsz, q_len, _ = hidden_states.size()
 
         proj = self.W_pack(hidden_states)
-        proj = proj.unflatten(-1, (3, self.hidden_size)).unsqueeze(0).transpose(0, -2).squeeze(-2)
-        query_states = proj[0].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-        key_states = proj[1].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-        value_states = proj[2].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        _, _, H_3 = proj.size()
+        H = H_3 // 3
+        #proj = proj.unflatten(-1, (3, self.hidden_size)).unsqueeze(0).transpose(0, -2).squeeze(-2)
+        #query_states = proj[0].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
+        #                                                                                 2)  # batch_size x source_len x hidden_size
+        #key_states = proj[1].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
+        #                                                                               2)  # batch_size x target_len x head_size
+        #value_states = proj[2].view(bsz, q_len, self.num_heads, self.head_dim).transpose(1,
+        #                                                                                 2)  # batch_size x source_len x hidden_size
+        q_proj, k_proj, v_proj = torch.split(proj, [H, H, H], dim=-1)
+        query_states = q_proj.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        key_states = k_proj.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+        value_states = v_proj.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
 
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
@@ -145,12 +151,11 @@ class BaichuanAttention(torch.nn.Module):
                 if len(attention_mask.size()) == 4:
                     attention_mask = attention_mask[:, :, -1:, :]   
                 else:
-                    attention_mask = attention_mask[:, -1:, :]    
+                    attention_mask = attention_mask[:, -1:, :]     
             attn_weights = attn_weights + attention_mask
             attn_weights = torch.max(attn_weights, torch.tensor(torch.finfo(attn_weights.dtype).min))
 
         attn_weights = torch.nn.functional.softmax(attn_weights, dim=-1)
-
         attn_output = torch.matmul(attn_weights, value_states)
 
         attn_output = attn_output.transpose(1, 2)
@@ -252,6 +257,9 @@ class BaichuanModel(BaichuanPreTrainedModel):
         self.first_run = True
         self.alibi_mask = None
 
+        # For the removed mask for attention head
+        self.mask_head_idx = None
+
     def get_input_embeddings(self):
         return self.embed_tokens
 
@@ -351,9 +359,15 @@ class BaichuanModel(BaichuanPreTrainedModel):
 
             past_key_value = past_key_values[idx] if past_key_values is not None else None
 
+            # Remove mask if buffer is not None
+            if self.mask_head_idx is not None and idx in self.mask_head_idx:
+                select_attention_mask = attention_mask[:, self.mask_head_idx[idx], :, :]
+            else:
+                select_attention_mask = attention_mask
+
             if self.gradient_checkpointing and self.training:
 
-                def create_custom_forward(module):
+                def create_custom_forward(module): 
                     def custom_forward(*inputs):
                         # None for past_key_value
                         return module(*inputs, output_attentions, None)
@@ -363,13 +377,13 @@ class BaichuanModel(BaichuanPreTrainedModel):
                 layer_outputs = torch.utils.checkpoint.checkpoint(
                     create_custom_forward(decoder_layer),
                     hidden_states,
-                    attention_mask,
+                    select_attention_mask,
                     None,
                 )
             else:
                 layer_outputs = decoder_layer(
                     hidden_states,
-                    attention_mask=attention_mask,
+                    attention_mask=select_attention_mask,
                     past_key_value=past_key_value,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
