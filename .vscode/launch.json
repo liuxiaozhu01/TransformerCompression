@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/experiments",
             "env": {
-                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_VISIBLE_DEVICES": "7",
                 "CUDA_LAUNCH_BLOCKING": "1",
                 "PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "5",
             },
@@ -20,7 +20,7 @@
                 "--model", "baichuan-inc/Baichuan2-7B-Base",
                 "--model-path", "/root/home/workspace/LLM/baichuan/baichuan-inc/Baichuan2-7B-Base",
                 "--save-dir", "exp/debugging",
-                "--sparsity", "0.20",
+                "--sparsity", "0.30",
                 "--device", "cuda:0",
                 "--cal-dataset", "c4",
                 "--cal-nsamples", "128",

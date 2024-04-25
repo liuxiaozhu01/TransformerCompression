@@ -4,12 +4,12 @@ import torch
 from torch import FloatTensor, LongTensor, Tensor, matmul
 from torch.nn import Linear, Module
 from transformers import PretrainedConfig, PreTrainedTokenizerBase
-from slicegpt.models.hf_baichuan.baichuan7B.modeling_baichuan_7B import RMSNorm, DecoderLayer, BaiChuanForCausalLM
-from slicegpt.models.hf_baichuan.baichuan7B.configuration_baichuan import BaiChuanConfig
+from slicegpt.models.hf_baichuan.baichuan2_7B.modeling_baichuan import RMSNorm, DecoderLayer, BaichuanForCausalLM
+from slicegpt.models.hf_baichuan.baichuan2_7B.configuration_baichuan import BaichuanConfig
 
 from slicegpt.model_adapter import LayerAdapter, ModelAdapter
 
-class CompressedBaichuan7BDecoderLayer(DecoderLayer):
+class CompressedBaichuan2_7BDecoderLayer(DecoderLayer):
     def forward(
             self,
             hidden_states: torch.Tensor,
@@ -18,7 +18,6 @@ class CompressedBaichuan7BDecoderLayer(DecoderLayer):
             past_key_value: Optional[Tuple[torch.Tensor]] = None,
             output_attentions: Optional[bool] = False,
             use_cache: Optional[bool] = False,
-            build_dp: Optional[bool] = False,
     ) -> Tuple[torch.FloatTensor, Optional[Tuple[torch.FloatTensor, torch.FloatTensor]]]:
         
         
@@ -34,7 +33,6 @@ class CompressedBaichuan7BDecoderLayer(DecoderLayer):
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
-            build_dp=build_dp,
         )
         if self.attn_shortcut_Q is not None:
             rotated_residual = matmul(residual, self.attn_shortcut_Q)
@@ -63,7 +61,7 @@ class CompressedBaichuan7BDecoderLayer(DecoderLayer):
 
         return outputs
     
-class Baichuan7BLayerAdapter(LayerAdapter):
+class Baichuan2_7BLayerAdapter(LayerAdapter):
     def __init__(self, layer: DecoderLayer) -> None:
         super().__init__()
         self._layer: DecoderLayer = layer
@@ -98,10 +96,10 @@ class Baichuan7BLayerAdapter(LayerAdapter):
     def get_mlp_output(self) -> Linear:
         return self.layer.mlp.down_proj
     
-class Baichuan7BModelAdapter(ModelAdapter):
-    def __init__(self, model: BaiChuanForCausalLM) -> None:
+class Baichuan2_7BModelAdapter(ModelAdapter):
+    def __init__(self, model: BaichuanForCausalLM) -> None:
         super().__init__()
-        self._model: BaiChuanForCausalLM = model
+        self._model: BaichuanForCausalLM = model
 
     @property
     def model(self) -> Module:
@@ -113,7 +111,7 @@ class Baichuan7BModelAdapter(ModelAdapter):
     
     @property
     def config_type(self) -> type:
-        return BaiChuanConfig
+        return BaichuanConfig
     
     @property
     def parallel_blocks(self) -> bool:
@@ -141,11 +139,11 @@ class Baichuan7BModelAdapter(ModelAdapter):
 
     @property
     def layer_adapter_type(self) -> type:
-        return Baichuan7BLayerAdapter
+        return Baichuan2_7BLayerAdapter
 
     @property
     def compressed_layer_type(self) -> type:
-        return CompressedBaichuan7BDecoderLayer
+        return CompressedBaichuan2_7BDecoderLayer
     
     @property
     def use_cache(self) -> bool:
@@ -201,15 +199,15 @@ class Baichuan7BModelAdapter(ModelAdapter):
         token: str | bool | None = None,
     ) -> ModelAdapter | None:
         
-        if not model_name.startswith("baichuan-inc/Baichuan-7B"):
+        if not model_name.startswith("baichuan-inc/Baichuan2-7B-Base"):
             return None
         
-        model = BaiChuanForCausalLM.from_pretrained(
+        model = BaichuanForCausalLM.from_pretrained(
             model_path, torch_dtype=dtype, token=token, local_files_only=local_files_only
         )
         model.config.torch_dtype = dtype
         
-        return Baichuan7BModelAdapter(model)
+        return Baichuan2_7BModelAdapter(model)
     
     @classmethod
     def _from_uninitialized(
@@ -221,18 +219,18 @@ class Baichuan7BModelAdapter(ModelAdapter):
         local_files_only: bool = False,
         token: str | bool | None = None,
     ) -> ModelAdapter | None:
-        if not model_name.startswith("baichuan-inc/Baichuan-7B"):
+        if not model_name.startswith("baichuan-inc/Baichuan2-7B-Base"):
             return None
 
-        class UninitializedBaiChuanForCausalLM(BaiChuanForCausalLM):
+        class UninitializedBaichuanForCausalLM(BaichuanForCausalLM):
             def _init_weights(self, _) -> None:
                 # Prevent weight initialization
                 pass
 
-        config = BaiChuanConfig.from_pretrained(
+        config = BaichuanConfig.from_pretrained(
             model_path, torch_dtype=dtype, token=token, local_files_only=local_files_only
         )
-        model = UninitializedBaiChuanForCausalLM(config)
+        model = UninitializedBaichuanForCausalLM(config)
         model = model.to(dtype=dtype)
 
-        return Baichuan7BModelAdapter(model)
+        return Baichuan2_7BModelAdapter(model)
