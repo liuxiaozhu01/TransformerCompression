@@ -8,6 +8,7 @@ from .adapters.phi2_adapter import Phi2ModelAdapter
 # from .adapters.baichuan13b_adapter import Baichuan13BModelAdapter
 # from .adapters.baichuan2_7b_adapter import Baichuan2_7BModelAdapter
 # from .adapters.baichuan2_13b_adapter import Baichuan2_13BModelAdapter
+from .adapters.bloom_adapter import BloomModelAdapter
 from .data_utils import get_dataset, prepare_dataloader
 from .gpu_utils import benchmark, distribute_model, evaluate_ppl
 from .hf_utils import get_model_and_tokenizer, load_sliced_model
