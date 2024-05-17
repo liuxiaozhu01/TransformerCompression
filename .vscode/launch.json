@@ -11,14 +11,15 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/experiments",
+            "justMyCode": false,
             "env": {
                 "CUDA_VISIBLE_DEVICES": "2",
                 "CUDA_LAUNCH_BLOCKING": "1",
                 "PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "5",
             },
             "args": [
-                "--model", "baichuan-inc/Baichuan2-7B-Base",
-                "--model-path", "/root/home/workspace/LLM/baichuan/baichuan-inc/Baichuan2-13B-Base",
+                "--model", "bigscience/bloom-7b1",
+                "--model-path", "/root/home/workspace/LLM/bloom/bigscience/bloom-7b1",
                 "--save-dir", "exp/debugging",
                 "--sparsity", "0.30",
                 "--device", "cuda:0",

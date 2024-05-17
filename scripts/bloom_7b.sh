@@ -13,10 +13,11 @@ fi
 GPU_STRING=$(IFS=,; echo "$GPUS")
 
 # Define an array with the rates you want to use
-rates=("0.45")
+# rates=("0.20" "0.30" "0.35" "0.40" "0.50")
+rates=("0.30" "0.35" "0.40" "0.45" "0.50")
 
 # make directory
-base_dir="exp/summary/llama_v2_7b"
+base_dir="exp/summary/bloom_7b"
 
 # Loop over the rates
 for rate in "${rates[@]}"
@@ -26,8 +27,8 @@ do
   mkdir -p $exp_dir
   
   CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES="$GPU_STRING" python experiments/run_slicegpt.py \
-  --model meta-llama/Llama-2-7b-hf \
-  --model-path /root/home/workspace/LLM/llama/meta-llama/Llama-2-7b-hf \
+  --model bigscience/bloom-7b1 \
+  --model-path /root/home/workspace/LLM/bloom/bigscience/bloom-7b1 \
   --save-dir $exp_dir \
   --sparsity $rate \
   --device cuda:0 \
@@ -38,6 +39,5 @@ do
   --eval-dataset wikitext2 \
   --ppl-eval-seqlen 128 \
   --ppl-eval-batch-size 8 \
-  --seed 100 \
   --no-wandb
 done

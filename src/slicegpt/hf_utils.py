@@ -98,7 +98,7 @@ def get_model_and_tokenizer(
     )
 
     model = model_adapter.model
-    model.seqlen = model.config.max_position_embeddings
+    # model.seqlen = model.config.max_position_embeddings
     model.eval()  # This switches off dropout.
     model_adapter.use_cache = False
 

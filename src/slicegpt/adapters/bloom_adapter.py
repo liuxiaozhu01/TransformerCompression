@@ -82,6 +82,10 @@ class BloomBlockAdapter(LayerAdapter):
     def hidden_states_args_position(self) -> int:
         return 0
 
+    @property
+    def hidden_states_output_position(self) -> int:
+        return 0
+
     def get_first_layernorm(self) -> Module:
         return self.layer.input_layernorm
 
@@ -162,26 +166,26 @@ class BloomModelAdapter(ModelAdapter):
         return self.model(input_ids=input_ids).logits
 
     def convert_layer_to_compressed(self, layer: Module, layer_idx: int | None) -> Module:
-        compressed_layer = self.compressed_layer_type(cast(self.config_type, self.config), layer_idx).to(
+        compressed_layer = self.compressed_layer_type(cast(self.config_type, self.config)).to(
             self.config.torch_dtype
         )
         compressed_layer.load_state_dict(layer.state_dict(), strict=True)
         return compressed_layer
 
     def get_layers(self) -> list[LayerAdapter]:
-        return [self.layer_adapter_type(layer) for layer in self.model.model.layers]
+        return [self.layer_adapter_type(layer) for layer in self.model.transformer.h]
 
     def get_raw_layer_at(self, index: int) -> Module:
-        return self.model.model.layers[index]
+        return self.model.transformer.h[index]
 
     def set_raw_layer_at(self, index: int, new_layer: Module) -> None:
-        self.model.model.layers[index] = new_layer
+        self.model.transformer.h[index] = new_layer
 
     def get_embeddings(self) -> list[Module]:
-        return [self.model.model.embed_tokens]
+        return [self.model.transformer.word_embeddings]
 
     def get_pre_head_layernorm(self) -> type:
-        pre_head_layernorm = self.model.model.norm
+        pre_head_layernorm = self.model.transformer.word_embeddings_layernorm
         assert isinstance(pre_head_layernorm, self.original_layer_norm_type)
         return pre_head_layernorm
 

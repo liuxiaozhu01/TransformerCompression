@@ -62,7 +62,8 @@ def eval_arg_parser(interactive: bool = True) -> argparse.Namespace:
     parser.add_argument(
         '--tasks',
         nargs='+',
-        default=["piqa", "hellaswag", "arc_easy", "arc_challenge", "winogrande"],
+        # default=["piqa", "hellaswag", "arc_easy", "arc_challenge", "winogrande"],
+        default=["boolq", "piqa","hellaswag","winogrande", "arc_easy","arc_challenge", "openbookqa"],
         choices=lm_eval_utils.MultiChoice(tasks.ALL_TASKS),
     )
     parser.add_argument('--num-fewshot', type=int, default=0, help="Number of fewshots for all tasks.")

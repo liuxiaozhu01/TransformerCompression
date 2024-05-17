@@ -13,10 +13,10 @@ fi
 GPU_STRING=$(IFS=,; echo "$GPUS")
 
 # Define an array with the rates you want to use
-rates=("0.45")
+rates=("0.30" "0.40" "0.50")
 
 # make directory
-base_dir="exp/summary/llama_v2_7b"
+base_dir="exp/save_model/llama_v2_7b"
 
 # Loop over the rates
 for rate in "${rates[@]}"
