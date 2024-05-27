@@ -17,7 +17,7 @@ rates=("0.30" "0.40" "0.50")
 # rates=("0.35" "0.45")
 
 # make directory
-base_dir="exp/save_model/llama_v2_7b"
+base_dir="exp/save_model/llama_v2_13b"
 
 # Loop over the rates
 for rate in "${rates[@]}"
@@ -27,8 +27,8 @@ do
   mkdir -p $exp_dir
   
   CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES="$GPU_STRING" python experiments/run_slicegpt.py \
-  --model meta-llama/Llama-2-7b-hf \
-  --model-path /root/Llama-2-7b-hf \
+  --model meta-llama/Llama-2-13b-hf \
+  --model-path /root/Llama-2-13b-hf \
   --save-dir $exp_dir \
   --sparsity $rate \
   --device cuda:0 \

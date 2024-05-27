@@ -14,10 +14,11 @@ GPU_STRING=$(IFS=,; echo "$GPUS")
 
 # Define an array with the rates you want to use
 rates=("0.30" "0.40" "0.50")
+# rates=("0.40")
 # rates=("0.35" "0.45")
 
 # make directory
-base_dir="exp/save_model/llama_v2_7b"
+base_dir="exp/save_model/test_llama_v2_7b"
 
 # Loop over the rates
 for rate in "${rates[@]}"
@@ -33,9 +34,9 @@ do
   --sparsity $rate \
   --device cuda:0 \
   --cal-dataset c4 \
-  --cal-nsamples 256 \
+  --cal-nsamples 1024 \
   --cal-batch-size 8 \
-  --cal-max-seqlen 2048 \
+  --cal-max-seqlen 4096 \
   --eval-dataset wikitext2 \
   --ppl-eval-seqlen 128 \
   --ppl-eval-batch-size 8 \
